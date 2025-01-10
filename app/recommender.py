@@ -32,31 +32,38 @@ class Recommender:
         Recommends songs for a user based on collaborative filtering.
 
         Args:
-            user_ratings (dict): User's ratings as a dictionary {song_title: rating}.
+            user_ratings (pd.DataFrame): DataFrame of the user's ratings.
             all_ratings (pd.DataFrame): DataFrame with all user ratings.
             song_data (pd.DataFrame): DataFrame with all song data.
 
         Returns:
             list: List of recommended song titles.
         """
+        if user_ratings.empty:
+            return ["No ratings found for the selected user."]
+
         # Merge ratings with song features
         merged_data = pd.merge(all_ratings, song_data, left_on="song_title", right_on="title")
 
         # Create a pivot table: users as rows, songs as columns
         pivot_table = merged_data.pivot_table(index="username", columns="title", values="rating").fillna(0)
 
-        # Find the active user's ratings
-        active_user = pivot_table.loc[user_ratings.name].values.reshape(1, -1)
+        # Use the username from user_ratings to find the active user's ratings
+        username = user_ratings["username"].iloc[0]
+        if username not in pivot_table.index:
+            return ["User has no ratings in the dataset."]
+
+        active_user = pivot_table.loc[username].values.reshape(1, -1)
 
         # Compute cosine similarity
         similarity_scores = cosine_similarity(active_user, pivot_table).flatten()
 
         # Sort users by similarity and find similar users
-        similar_users = similarity_scores.argsort()[-2::-1]
+        similar_users = similarity_scores.argsort()[-2::-1]  # Exclude the active user
 
         # Find songs rated highly by similar users but not rated by the active user
         similar_user_ratings = pivot_table.iloc[similar_users]
-        unseen_songs = similar_user_ratings.loc[:, pivot_table.loc[user_ratings.name] == 0].mean(axis=0)
+        unseen_songs = similar_user_ratings.loc[:, pivot_table.loc[username] == 0].mean(axis=0)
 
         # Recommend top 5 unseen songs
         recommendations = unseen_songs.sort_values(ascending=False).head(5).index.tolist()

@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, flash
 from recommender import Recommender
 import os
+import csv
 import pandas as pd
 from data_loader import detect_encoding  # Import the detect_encoding function
 
@@ -18,6 +19,15 @@ def load_ratings():
         encoding = detect_encoding(RATINGS_FILE)
         return pd.read_csv(RATINGS_FILE, encoding=encoding)
     return pd.DataFrame(columns=["username", "song_title", "rating"])
+
+def load_users():
+    users_file = os.path.join(base_dir, "../data/users.csv")  # Path to the users file
+    if not os.path.exists(users_file):
+        return []
+
+    with open(users_file, mode="r") as file:
+        reader = csv.DictReader(file)
+        return [row["username"] for row in reader if "username" in row]
 
 # Load songs
 def load_songs():
@@ -47,9 +57,10 @@ def recommend_song():
 @recommend_routes.route("/recommend/ratings", methods=["GET", "POST"])
 def recommend_ratings():
     all_ratings = load_ratings()  # Load all ratings
-    song_data = pd.read_csv(SONGS_FILE, encoding=detect_encoding(SONGS_FILE))  # Song data with features
-    users = pd.read_csv(USERS_FILE, encoding=detect_encoding(USERS_FILE))["username"].tolist()
+    song_data = load_songs()  # Load all songs with features
+    users = load_users()  # Load all usernames
     recommendations = []
+    selected_user = None
 
     if request.method == "POST":
         selected_user = request.form.get("username")
@@ -58,4 +69,9 @@ def recommend_ratings():
             recommender = Recommender()
             recommendations = recommender.recommend_for_user(user_ratings, all_ratings, song_data)
 
-    return render_template("recommend_ratings.html", users=users, recommendations=recommendations)
+    return render_template(
+        "recommend_ratings.html",
+        users=users,
+        recommendations=recommendations,
+        selected_user=selected_user,
+    )
