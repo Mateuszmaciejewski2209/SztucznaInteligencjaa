@@ -28,10 +28,14 @@
     .rate-button:hover {
         background-color: #ddd;
     }
+
+    button.rate-button {
+        cursor: pointer;
+    }
 </style>
 
 <div class="center-content">
-    <h1>Rate Songs</h1>
+    <h1 style="display: flex; justify-content: center">Rate Songs</h1>
     <table border="1" style="margin: auto;">
         <thead>
         <tr>
@@ -47,12 +51,16 @@
             <td>{{ song.artist }}</td>
             <td>
                 <form method="POST" style="display: inline;">
-                    {% for i in range(1, 6) %}
-                    <button type="submit" name="rating" value="{{ i }}"
-                            style="background-color: lightblue">
-                        {{ i }}
-                    </button>
-                    {% endfor %}
+                    <div class="rate-buttons">
+                        {% for i in range(1, 6) %}
+                        <button type="submit"
+                                name="rating"
+                                value="{{ i }}"
+                                class="rate-button {% if ratings[song.title]|default(0) == i %}selected{% endif %}">
+                            {{ i }}
+                        </button>
+                        {% endfor %}
+                    </div>
                     <input type="hidden" name="song_title" value="{{ song.title }}">
                 </form>
             </td>

@@ -67,16 +67,12 @@ def load_user_ratings(username):
         initialize_ratings_file()
 
     ratings = pd.read_csv(RATINGS_FILE)
-    print("Headers in ratings.csv:", ratings.columns)  # Debugging line
 
-    expected_headers = {"username", "song_title", "rating"}
-    if not expected_headers.issubset(ratings.columns):
+    if set(ratings.columns) != {"username", "song_title", "rating"}:
         raise KeyError("The ratings.csv file does not have the correct headers.")
 
     user_ratings = ratings[ratings["username"] == username].set_index("song_title")["rating"].to_dict()
     return user_ratings
-
-
 
 
 # Login route
@@ -122,12 +118,12 @@ def songs():
         flash("You must be logged in to access this page.", "error")
         return redirect(url_for("login_routes.login"))
 
-    username = session["username"]
-
-    # Load songs and ratings
+    # Load all songs
     songs = pd.read_csv(os.path.join(base_dir, "../data/songs.csv")).to_dict(orient="records")
-    ratings = pd.read_csv(os.path.join(base_dir, "../data/ratings.csv"))
-    user_ratings = ratings[ratings["username"] == username].set_index("song_title")["rating"].to_dict()
+
+    # Load user ratings
+    username = session["username"]
+    user_ratings = load_user_ratings(username)
 
     if request.method == "POST":
         song_title = request.form.get("song_title")
@@ -138,4 +134,6 @@ def songs():
             flash(f"Your rating for '{song_title}' has been updated to {rating}.", "success")
             return redirect(url_for("login_routes.songs"))
 
-    return render_template("songs.html", songs=songs, user_ratings=user_ratings)
+    # Pass the songs and user ratings to the template
+    return render_template("songs.html", songs=songs, ratings=user_ratings)
+
