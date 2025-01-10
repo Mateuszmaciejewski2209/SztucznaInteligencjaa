@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Recommendation System</title>
+    <style>
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-left {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-right {
+            margin-left: auto;
+
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <a href="/songs">Rate Songs</a>
+            <a href="/recommend/song">Recommend by Song</a>
+            <a href="/recommend/ratings">Recommend by Ratings</a>
+        </div>
+        <div class="nav-right">
+            {% if session.get("username") %}
+                <span style="margin-right: 10px">Logged in as {{ session["username"] }}</span>
+                <a href="/logout">Logout</a>
+            {% else %}
+                <a href="/">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>

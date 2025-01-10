@@ -13,8 +13,37 @@ def detect_encoding(file_path):
 class DataLoader:
 
     def __init__(self):
-        self.spotify_top10s_path = "C:/Users/mateu/Documents/GitHub/SztucznaInteligencjaa/data/Spotify_top10s.csv"
-        self.spotify_2000s_path = "C:/Users/mateu/Documents/GitHub/SztucznaInteligencjaa/data/Spotify_2000s.csv"
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.spotify_top10s_path = os.path.join(base_dir, "../data/Spotify_top10s.csv")
+        self.spotify_2000s_path = os.path.join(base_dir, "../data/Spotify_2000s.csv")
+        self.songs_output_path = os.path.join(base_dir, "../data/songs.csv")
+
+    def generate_songs(self):
+        if not os.path.exists(self.spotify_top10s_path) or not os.path.exists(self.spotify_2000s_path):
+            raise FileNotFoundError("Pliki Spotify_top10s.csv lub Spotify_2000s.csv nie zostały znalezione.")
+
+        # Detect encoding
+        top10s_encoding = detect_encoding(self.spotify_top10s_path)
+        spotify_2000s_encoding = detect_encoding(self.spotify_2000s_path)
+
+        # Read CSV files with detected encodings
+        songs_top10s = pd.read_csv(self.spotify_top10s_path, encoding=top10s_encoding)
+        songs_2000s = pd.read_csv(self.spotify_2000s_path, encoding=spotify_2000s_encoding)
+
+        # Rename columns to ensure 'title' exists
+        songs_top10s = songs_top10s.rename(columns={"Title": "title", "Artist": "artist"})
+        songs_2000s = songs_2000s.rename(columns={"Title": "title", "Artist": "artist"})
+
+        # Combine datasets with relevant columns
+        combined = pd.concat([
+            songs_top10s[["title", "artist"]],
+            songs_2000s[["title", "artist"]]
+        ])
+
+        # Drop duplicates and save to songs.csv
+        combined.drop_duplicates(subset="title", inplace=True)
+        combined.to_csv(self.songs_output_path, index=False)
+        print(f"Plik songs.csv został wygenerowany w folderze 'data'.")
 
     def load_datasets(self):
         if not os.path.exists(self.spotify_top10s_path):

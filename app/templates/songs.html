@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .rate-buttons {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+    }
+
+    .rate-button {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        border: 1px solid #000;
+        border-radius: 5px;
+        text-align: center;
+        cursor: pointer;
+        background-color: #f0f0f0;
+    }
+
+    .rate-button.selected {
+        background-color: #4CAF50;
+        color: white;
+        font-weight: bold;
+    }
+
+    .rate-button:hover {
+        background-color: #ddd;
+    }
+</style>
+
+<div class="center-content">
+    <h1>Rate Songs</h1>
+    <table border="1" style="margin: auto;">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>Artist</th>
+            <th>Rate</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for song in songs %}
+        <tr>
+            <td>{{ song.title }}</td>
+            <td>{{ song.artist }}</td>
+            <td>
+                <form method="POST" style="display: inline;">
+                    {% for i in range(1, 6) %}
+                    <button type="submit" name="rating" value="{{ i }}"
+                            style="background-color: lightblue">
+                        {{ i }}
+                    </button>
+                    {% endfor %}
+                    <input type="hidden" name="song_title" value="{{ song.title }}">
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
