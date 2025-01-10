@@ -1,37 +1,61 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, flash
 from recommender import Recommender
 import os
 import pandas as pd
+from data_loader import detect_encoding  # Import the detect_encoding function
 
 recommend_routes = Blueprint("recommend_routes", __name__)
 
-# Ścieżki do plików
-RATINGS_FILE = os.path.join("data", "ratings.csv")
-SONGS_FILE = os.path.join("data", "Spotify_top10s.csv")
+# Paths to files
+base_dir = os.path.dirname(os.path.abspath(__file__))
+RATINGS_FILE = os.path.join(base_dir, "../data/ratings.csv")
+SONGS_FILE = os.path.join(base_dir, "../data/songs.csv")
+USERS_FILE = os.path.join(base_dir, "../data/users.csv")
 
-# Ładowanie danych
+# Load ratings
 def load_ratings():
-    return pd.read_csv(RATINGS_FILE)
+    if os.path.exists(RATINGS_FILE):
+        encoding = detect_encoding(RATINGS_FILE)
+        return pd.read_csv(RATINGS_FILE, encoding=encoding)
+    return pd.DataFrame(columns=["username", "song_title", "rating"])
 
+# Load songs
 def load_songs():
-    return pd.read_csv(SONGS_FILE)
+    if os.path.exists(SONGS_FILE):
+        encoding = detect_encoding(SONGS_FILE)
+        return pd.read_csv(SONGS_FILE, encoding=encoding)
+    return pd.DataFrame(columns=["title"])
 
-# Rekomendacja na bazie piosenki
+# Recommendation based on song
 @recommend_routes.route("/recommend/song", methods=["GET", "POST"])
 def recommend_song():
-    songs = load_songs()["title"].tolist()
+    songs = load_songs()  # Load all songs
+    song_data = pd.read_csv(SONGS_FILE, encoding=detect_encoding(SONGS_FILE))  # Song data with features
+    print("Columns in song_data:", song_data.columns)  # Debugging line
+
     recommendations = []
+
     if request.method == "POST":
         selected_song = request.form.get("song")
         recommender = Recommender()
-        recommendations = recommender.recommend_similar_songs(selected_song)
-    return render_template("recommend_song.html", songs=songs, recommendations=recommendations)
+        recommendations = recommender.recommend_similar_songs(selected_song, song_data)
 
-# Rekomendacja na bazie ocen
-@recommend_routes.route("/recommend/ratings", methods=["GET"])
+    return render_template("recommend_song.html", songs=songs["title"].tolist(), recommendations=recommendations)
+
+
+# Recommendation based on ratings
+@recommend_routes.route("/recommend/ratings", methods=["GET", "POST"])
 def recommend_ratings():
-    ratings = load_ratings()
-    recommender = Recommender()
-    user_id = request.args.get("user_id")
-    recommendations = recommender.recommend_for_user(int(user_id)) if user_id else []
-    return render_template("recommend_ratings.html", recommendations=recommendations)
+    all_ratings = load_ratings()  # Load all ratings
+    song_data = pd.read_csv(SONGS_FILE, encoding=detect_encoding(SONGS_FILE))  # Song data with features
+    users = pd.read_csv(USERS_FILE, encoding=detect_encoding(USERS_FILE))["username"].tolist()
+    recommendations = []
+
+    if request.method == "POST":
+        selected_user = request.form.get("username")
+        if selected_user:
+            user_ratings = all_ratings[all_ratings["username"] == selected_user]
+            recommender = Recommender()
+            recommendations = recommender.recommend_for_user(user_ratings, all_ratings, song_data)
+
+    return render_template("recommend_ratings.html", users=users, recommendations=recommendations)

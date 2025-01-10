@@ -30,14 +30,39 @@ class DataLoader:
         songs_top10s = pd.read_csv(self.spotify_top10s_path, encoding=top10s_encoding)
         songs_2000s = pd.read_csv(self.spotify_2000s_path, encoding=spotify_2000s_encoding)
 
-        # Rename columns to ensure 'title' exists
-        songs_top10s = songs_top10s.rename(columns={"Title": "title", "Artist": "artist"})
-        songs_2000s = songs_2000s.rename(columns={"Title": "title", "Artist": "artist"})
+        # Rename columns to standardize feature names
+        songs_top10s = songs_top10s.rename(columns={
+            "bpm": "tempo",
+            "nrgy": "energy",
+            "dnce": "danceability",
+            "dB": "loudness",
+            "val": "valence",
+            "dur": "duration_ms",
+            "acous": "acousticness",
+            "spch": "speechiness",
+            "pop": "popularity",
+            "title": "title",  # Ensure title is included
+            "artist": "artist"
+        })
 
-        # Combine datasets with relevant columns
+        songs_2000s = songs_2000s.rename(columns={
+            "Beats Per Minute (BPM)": "tempo",
+            "Energy": "energy",
+            "Danceability": "danceability",
+            "Loudness (dB)": "loudness",
+            "Valence": "valence",
+            "Length (Duration)": "duration_ms",
+            "Acousticness": "acousticness",
+            "Speechiness": "speechiness",
+            "Popularity": "popularity",
+            "Title": "title",
+            "Artist": "artist"
+        })
+
+        # Combine datasets with required features
         combined = pd.concat([
-            songs_top10s[["title", "artist"]],
-            songs_2000s[["title", "artist"]]
+            songs_top10s[["title", "artist", "tempo", "energy", "danceability", "loudness", "valence"]],
+            songs_2000s[["title", "artist", "tempo", "energy", "danceability", "loudness", "valence"]]
         ])
 
         # Drop duplicates and save to songs.csv
@@ -58,7 +83,6 @@ class DataLoader:
         spotify_2000s = pd.read_csv(self.spotify_2000s_path, encoding=spotify_2000s_encoding)
 
         spotify_top10s = spotify_top10s.rename(columns={
-            "title": "title",
             "bpm": "tempo",
             "nrgy": "energy",
             "dnce": "danceability",
@@ -72,10 +96,6 @@ class DataLoader:
         })
 
         spotify_2000s = spotify_2000s.rename(columns={
-            "Title": "title",
-            "Artist": "artist",
-            "Top Genre": "top genre",
-            "Year": "year",
             "Beats Per Minute (BPM)": "tempo",
             "Energy": "energy",
             "Danceability": "danceability",

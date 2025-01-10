@@ -55,12 +55,13 @@ def save_rating(username, song_title, rating):
         # Update the rating
         ratings.loc[existing_rating, "rating"] = int(rating)
     else:
-        # Add a new rating
-        new_rating = {"username": username, "song_title": song_title, "rating": int(rating)}
-        ratings = ratings.append(new_rating, ignore_index=True)
+        # Add a new rating using pd.concat
+        new_rating = pd.DataFrame([{"username": username, "song_title": song_title, "rating": int(rating)}])
+        ratings = pd.concat([ratings, new_rating], ignore_index=True)
 
     # Save the updated ratings back to the file
     ratings.to_csv(ratings_file, index=False)
+
 
 def load_user_ratings(username):
     if not os.path.exists(RATINGS_FILE):

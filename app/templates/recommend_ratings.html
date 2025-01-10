@@ -1,9 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Recommendations by Ratings</h1>
+<h1>Recommend by User Ratings</h1>
+<form method="POST">
+    <label for="username">Select a User:</label>
+    <select id="username" name="username">
+        {% for user in users %}
+        <option value="{{ user }}">{{ user }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Recommend</button>
+</form>
+
+{% if recommendations %}
+<h2>Recommended Songs:</h2>
 <ul>
-    {% for recommendation in recommendations %}
-    <li>{{ recommendation }}</li>
+    {% for rec in recommendations %}
+    <li>{{ rec }}</li>
     {% endfor %}
 </ul>
+{% endif %}
 {% endblock %}
